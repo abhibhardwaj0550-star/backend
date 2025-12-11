@@ -6,7 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+src/todo-project-8b038-firebase-adminsdk-fbsvc-7d6ac1848b.json
 node_modules
 package-lock.json
 dist

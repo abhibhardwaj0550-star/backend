@@ -1,3 +1,5 @@
+// 📁 routes/todo.js
+
 import express from "express";
 import {
   Addtodo,
@@ -5,12 +7,14 @@ import {
   GetList,
   DeleteTodo,
 } from "../controllers/todo.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/add-todo", Addtodo);
-router.get("/get-todo-list", GetList);
-router.put("/edit-todo/:id", EditTodo);
-router.delete("/delete-todo/:id", DeleteTodo);
+// All these need req.user → protect them
+router.post("/add-todo", protect, Addtodo);
+router.get("/get-todo-list", protect, GetList);
+router.put("/edit-todo/:id", protect, EditTodo);
+router.delete("/delete-todo/:id", protect, DeleteTodo);
 
 export default router;

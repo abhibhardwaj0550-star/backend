@@ -1,22 +1,37 @@
+// 📁 middleware/authMiddleware.js
+
 import jwt from "jsonwebtoken";
+import User from "../models/auth.js";
 
-const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+export const protect = async (req, res, next) => {
+  let token;
 
-  if (!authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token, authorization denied" });
-  }
+  // Expecting: Authorization: Bearer <token>
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    try {
+      token = req.headers.authorization.split(" ")[1];
 
-  const token = authHeader.split(" ")[1];
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { id: ... }
-    next();
-  } catch (err) {
-    console.error("Auth middleware error:", err);
-    return res.status(401).json({ message: "Token is not valid" });
+      // Attach user to req (without password)
+      req.user = await User.findById(decoded.userId).select("-password");
+
+      if (!req.user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      next();
+    } catch (error) {
+      console.error("Token error:", error);
+      return res
+        .status(401)
+        .json({ message: "Not authorized, token failed" });
+    }
+  } else {
+    return res.status(401).json({ message: "No token, not authorized" });
   }
 };
-
-export default authMiddleware;
