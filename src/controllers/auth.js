@@ -1,29 +1,26 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/auth.js";
+import admin from "../firebase.js";   
 
 export const googleLogin = async (req, res) => {
   const { idToken } = req.body;
 
   try {
-    // Verify Firebase ID token
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     const { uid, email, name } = decodedToken;
 
-    // Check if user exists
     let user = await User.findOne({ email });
 
     if (!user) {
       user = await User.create({
-        uid,
         name,
         email,
-        password: "", // optional: empty for social login
+        password: Math.random().toString(36).slice(-8), 
         role: "user",
+        loginMethod: "google",
       });
     }
-
-    // Generate JWT token for backend
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET || "secretkey",
@@ -42,7 +39,9 @@ export const googleLogin = async (req, res) => {
     });
   } catch (error) {
     console.error("Google login error:", error);
-    res.status(401).json({ message: "Invalid Firebase ID token", error: error.message });
+    res
+      .status(401)
+      .json({ message: "Invalid Firebase ID token", error: error.message });
   }
 };
 
@@ -67,7 +66,7 @@ export const registerUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role:"user",
+      role: "user",
     });
 
     const token = jwt.sign(
@@ -82,7 +81,7 @@ export const registerUser = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-         role: user.role,
+        role: user.role,
       },
       token,
     });
@@ -97,13 +96,9 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
-
 
     const user = await User.findOne({ email });
 
@@ -111,20 +106,17 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Email not Found" });
     }
 
-
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({ message: "Password not Matched" });
     }
 
-
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET || "secretkey",
       { expiresIn: "7d" }
     );
-
 
     res.json({
       message: "Login successful",
@@ -133,7 +125,7 @@ export const loginUser = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        role:user.role
+        role: user.role,
       },
       token,
     });
@@ -143,13 +135,11 @@ export const loginUser = async (req, res) => {
   }
 };
 
-
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find();
 
     res.status(200).json({
-
       message: "Users Data",
       users,
     });

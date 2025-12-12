@@ -6,7 +6,6 @@ import authrouter from "./routes/auth.js";
 import todoRouter from "./routes/todo.js";
 import feedbackRouter from "./routes/Feedback.js";
 import adminRouter from "./routes/admin.js";
-
 import cors from "cors";
 
 dotenv.config();
