@@ -1,15 +1,20 @@
 import mongoose from "mongoose";
 
-const userSchema =new mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     name: {
-      type:String,
+      type: String,
       required: true
     },
-    email:{
+    email: {
       type: String,
       required: true,
-      unique:true
+      unique: true
+    },
+    loginMethod: {
+      type: String,
+      enum: ["google", "email"],
+      default: "email",
     },
     password: {
       type: String,
@@ -21,12 +26,12 @@ const userSchema =new mongoose.Schema(
       enum: ["user", "admin"], // allowed roles
       default: "user",         // default role
     },
-    resetToken : String,
-    resetTokenExpiry :Date
+    resetToken: String,
+    resetTokenExpiry: Date
   },
-  {timestamps: true}
+  { timestamps: true }
 );
 
-const User = mongoose.model ("user", userSchema);
+const User = mongoose.model("user", userSchema);
 
 export default User;
