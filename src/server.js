@@ -19,7 +19,7 @@ app.use(
     credentials: true,
   })
 );
-
+console.log(process.env.MONGO_URI,"mongodb=========")
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
