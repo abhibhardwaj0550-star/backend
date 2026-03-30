@@ -5,14 +5,21 @@ import admin from "../firebase.js";
 
 export const googleLogin = async (req, res) => {
   const { idToken } = req.body;
+  console.time("GoogleLoginProcess");
 
   try {
+    console.time("FirebaseVerifyToken");
     const decodedToken = await admin.auth().verifyIdToken(idToken);
+    console.timeEnd("FirebaseVerifyToken");
+
     const { uid, email, name } = decodedToken;
 
+    console.time("MongoFindUser_Google");
     let user = await User.findOne({ email });
+    console.timeEnd("MongoFindUser_Google");
 
     if (!user) {
+      console.time("MongoCreateUser_Google");
       user = await User.create({
         name,
         email,
@@ -20,6 +27,7 @@ export const googleLogin = async (req, res) => {
         role: "user",
         loginMethod: "google",
       });
+      console.timeEnd("MongoCreateUser_Google");
     }
     const token = jwt.sign(
       { userId: user._id },
@@ -27,6 +35,7 @@ export const googleLogin = async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    console.timeEnd("GoogleLoginProcess");
     res.json({
       message: "Google login successful",
       user: {
@@ -38,6 +47,7 @@ export const googleLogin = async (req, res) => {
       token,
     });
   } catch (error) {
+    console.timeEnd("GoogleLoginProcess");
     console.error("Google login error:", error);
     res
       .status(401)
@@ -95,20 +105,28 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.time("LoginProcess");
 
     if (!email || !password) {
+      console.timeEnd("LoginProcess");
       return res.status(400).json({ message: "Email and password are required" });
     }
 
+    console.time("MongoFindUser_Login");
     const user = await User.findOne({ email });
+    console.timeEnd("MongoFindUser_Login");
 
     if (!user) {
+      console.timeEnd("LoginProcess");
       return res.status(401).json({ message: "Email not Found" });
     }
 
+    console.time("BcryptCompare");
     const isMatch = await bcrypt.compare(password, user.password);
+    console.timeEnd("BcryptCompare");
 
     if (!isMatch) {
+      console.timeEnd("LoginProcess");
       return res.status(401).json({ message: "Password not Matched" });
     }
 
@@ -118,6 +136,7 @@ export const loginUser = async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    console.timeEnd("LoginProcess");
     res.json({
       message: "Login successful",
       success: true,
@@ -130,6 +149,7 @@ export const loginUser = async (req, res) => {
       token,
     });
   } catch (error) {
+    console.timeEnd("LoginProcess");
     console.error("Login error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
